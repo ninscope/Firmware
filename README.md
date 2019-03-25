@@ -1,2 +1,2 @@
 # Firmware
-NINscope DAQ firmware for the EZ-USB FX3 SS USB controller
+Firmware for the FX3 SS USB Controller on the DAQ.
