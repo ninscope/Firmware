@@ -92,6 +92,11 @@
 #define CMD_BLACKOFFSET		0x11
 #define CMD_AUTOCAL_ON		0x12
 #define CMD_AUTOCAL_OFF		0x13
+#define CMD_PAIR_CAM_ON		0x14
+#define CMD_PAIR_CAM_OFF	0x15
+#define CMD_DETECT_ON		0x16
+#define CMD_DETECT_OFF		0x17
+
 
 
 #ifdef USB_DEBUG_INTERFACE

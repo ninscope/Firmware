@@ -178,6 +178,9 @@ CyBool_t		fCyOptoGenActiveFrame = CyFalse;
 CyBool_t		fCyROIUpdateX = CyFalse;
 CyBool_t		fCyROIUpdateY = CyFalse;
 
+uint8_t			CyLEDStatus = 0;
+CyBool_t 		fLEDUpdate = CyFalse;
+
 uint8_t			CyROIXpos = 7;
 uint8_t			CyROIYpos = 16;
 
@@ -185,6 +188,8 @@ uint16_t		CyBlackOffset = 0;
 CyBool_t		fCyBlackOffsetUpd = CyFalse;
 CyBool_t		fCyAutoCal = CyTrue;
 CyBool_t		fCyAutoCalUpd = CyFalse;
+
+CyBool_t 		fCyCamPair = CyFalse;
 
 CyBool_t		fEn_TriggerInput = CyFalse;
 
@@ -304,15 +309,15 @@ void CyFxGpioIntrCb (
 			/* Check status of the pin */
 			if (gpioValue == CyTrue)
 			{
-				/* Set GPIO high event */
-				CyU3PGpioSetValue(TESTPIN3_GPIO, CyTrue);
-				TrigSigStatus = CyFalse;
-			}
-			else
-			{
 				/* Set GPIO low Event */
 				CyU3PGpioSetValue(TESTPIN3_GPIO, CyFalse);
 				TrigSigStatus = CyTrue;
+			}
+			else
+			{
+				/* Set GPIO high event */
+				CyU3PGpioSetValue(TESTPIN3_GPIO, CyTrue);
+				TrigSigStatus = CyFalse;
 
 			}
     }
@@ -1152,6 +1157,31 @@ CyU3PUpdateSensorSettings (
 		fCyROIUpdateY = CyFalse;
 	}
 
+	if( fLEDUpdate )
+	{
+		uint8_t buf[2];
+		if(CyLEDStatus)
+		{
+
+			 //LED on
+			 buf[0] = 0x0D;
+			 FPDLinkWrite(EXPA_ADDR_WR,0x05,1,buf);
+		}
+		else
+		{
+
+			//LED off
+			buf[0] = 0x05;
+				FPDLinkWrite(EXPA_ADDR_WR,0x05,1,buf);		//58mA
+
+
+
+		}
+	}
+
+
+
+
 
 }
 
@@ -1216,9 +1246,17 @@ CyFxUvcApplnDmaCallback (
 
 
                 EndOfFrame = CyTrue;
-                uint16_t Pixcnt = dmaBuffer.count - 10;
+                uint16_t Pixcnt = dmaBuffer.count - 12;
 
                 RecordFrameCnt++;
+
+                if(fCyCamPair)
+                	dmaBuffer.buffer[Pixcnt++] = 0x5D;
+                else
+                	dmaBuffer.buffer[Pixcnt++] = 0x00;
+
+                fCyOptoGenActiveFrame = CyFalse;
+                dmaBuffer.buffer[Pixcnt++] = 0x80;
 
                 if(fCyOptoGenActiveFrame)
                 	dmaBuffer.buffer[Pixcnt++] = 0xFF;
@@ -1226,12 +1264,16 @@ CyFxUvcApplnDmaCallback (
                 	dmaBuffer.buffer[Pixcnt++] = 0x00;
                 fCyOptoGenActiveFrame = CyFalse;
                 dmaBuffer.buffer[Pixcnt++] = 0x80;
+
                 dmaBuffer.buffer[Pixcnt++] = CY_U3P_DWORD_GET_BYTE3(RecordFrameCnt);
                 dmaBuffer.buffer[Pixcnt++] = 0x80;
+
                 dmaBuffer.buffer[Pixcnt++] = CY_U3P_DWORD_GET_BYTE2(RecordFrameCnt);
                 dmaBuffer.buffer[Pixcnt++] = 0x80;
+
                 dmaBuffer.buffer[Pixcnt++] = CY_U3P_DWORD_GET_BYTE1(RecordFrameCnt);
                 dmaBuffer.buffer[Pixcnt++] = 0x80;
+
                 dmaBuffer.buffer[Pixcnt++] = CY_U3P_DWORD_GET_BYTE0(RecordFrameCnt);
                 dmaBuffer.buffer[Pixcnt++] = 0x80;
 
@@ -1727,7 +1769,7 @@ CyFxUVCApplnInit (void)
 				CyFxAppErrorHandler (apiRetStatus);
 			}
 			//weak pullup to eliminate fails trigger
-			CyU3PGpioSetIoMode(TRIG_RECORD_EXT_GPIO,CY_U3P_GPIO_IO_MODE_WPU);
+			CyU3PGpioSetIoMode(TRIG_RECORD_EXT_GPIO,CY_U3P_GPIO_IO_MODE_WPD);
 
 
     /* Initialize the P-port. */
@@ -3267,6 +3309,25 @@ void  CyUSBUARThread_Entry(uint32_t input)
 							case CMD_AUTOCAL_OFF:	fCyAutoCal = CyFalse;
 													fCyAutoCalUpd = CyTrue;
 													break;
+
+							case CMD_PAIR_CAM_ON:	fCyCamPair = CyTrue;
+													fLEDUpdate = CyTrue;
+													CyLEDStatus = 0;
+													break;
+
+							case CMD_PAIR_CAM_OFF:	fCyCamPair = CyFalse;
+													fLEDUpdate = CyTrue;
+													CyLEDStatus = 1;
+													break;
+							case CMD_DETECT_ON:		fLEDUpdate = CyTrue;
+													CyLEDStatus = 0;
+													break;
+							case CMD_DETECT_OFF:	fLEDUpdate = CyTrue;
+													CyLEDStatus = 1;
+													break;
+
+
+
 
 							default:				break;
 

@@ -612,18 +612,6 @@ const uint8_t CyFxUSBSSConfigDscr[] =
         0x09,                           /* Descriptor Size */
         CY_U3P_USB_CONFIG_DESCR,        /* Configuration Descriptor Type */
 
-#warning need to support all to define options
-//#ifdef USB_DEBUG_INTERFACE
-//#ifdef FX3_UVC_1_0_SUPPORT
-//        0xFC,0x00,                      /* Total length of this and all sub-descriptors. */
-//#else
-//        0xFD,0x00,                      /* Total length of this and all sub-descriptors. */
-//#endif
-//        0x03,                           /* Number of interfaces */
-//#else
-//#ifdef FX3_UVC_1_0_SUPPORT
-//        0xD9,0x00,                      /* Length of this descriptor and all sub descriptors */
-//#else
 
         0x2E,0x01,
         0x04,

@@ -642,7 +642,7 @@ CyPythonSpiUploads( void )
 	  CyFxSpiPythonWord(232, 0x01F4);//new
 	  CyFxSpiPythonWord(235, 0x00E1);//new
 
-	  //CyFxSpiPythonWord(96, 0x0001); //Temperatuur
+	  CyFxSpiPythonWord(96, 0x0001); //Temperatuur
 }
 
 

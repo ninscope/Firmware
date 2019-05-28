@@ -280,6 +280,14 @@ CyFxLSM6DSLTR_DIS  (
         void);
 
 CyU3PReturnStatus_t
+FPDLinkWrite (
+        uint8_t slaveAddr,
+        uint8_t Addr,
+        uint8_t count,
+        uint8_t *buf);
+
+
+CyU3PReturnStatus_t
 FPDLinkRead (
         uint8_t slaveAddr,
         uint8_t Addr,
