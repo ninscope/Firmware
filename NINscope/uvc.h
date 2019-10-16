@@ -73,6 +73,8 @@
 #define CY_FX_UART_OPTO_DATA_EVENT		            	(1 << 3)
 #define CY_FX_UART_TRIG_REC_START_EVENT					(1 << 4)
 #define CY_FX_UART_TRIG_REC_STOP_EVENT					(1 << 5)
+#define CY_FX_UART_PYTHON_TEMP_DATA_EVENT				(1 << 6)
+#define CY_FX_UART_VERSION_EVENT						(1 << 7)
 
 #define CMD_GSENSOR_ON		0x02
 #define CMD_EXPOSURE		0x03
@@ -96,6 +98,7 @@
 #define CMD_PAIR_CAM_OFF	0x15
 #define CMD_DETECT_ON		0x16
 #define CMD_DETECT_OFF		0x17
+#define CMD_PYTEMP_RD		0x18
 
 
 

@@ -54,6 +54,8 @@
  */
 
 
+
+
 #include <cyu3system.h>
 #include <cyu3os.h>
 #include <cyu3dma.h>
@@ -131,14 +133,14 @@ CyBool_t TrigSigStatus = CyFalse;
 CyBool_t TrigSigSve = CyFalse;
 
 
-static int OGPulseWidth = 10;
-static int OGPeriode = 200;
-static int OGBurstCnt = 5;
-static int OGBurst = 5;
-static int OGPause = 1000;
-static int OGLoopCnt = 3;
-static int OGLoop = 1;
-static int OGStrDelay = 200;
+static int OGPulseWidth = 0;
+static int OGPeriode = 0;
+static int OGBurstCnt = 0;
+static int OGBurst = 0;
+static int OGPause = 0;
+static int OGLoopCnt = 0;
+static int OGLoop = 0;
+static int OGStrDelay = 0;
 static int FramesPT = 0;
 
 //////////////////////////////////////  start---usb-uart
@@ -159,13 +161,19 @@ static CyU3PThread   USBUARTAppThread1;                      /* UVC video stream
 
 
 /* Settings to Sensor */
-uint16_t 		CyPythonExposureVar = EXPOSURE_DEF;
+uint16_t 		CyPythonExposureVar = 0;
 CyBool_t        fCyPythonExposureUpd = CyFalse;
-uint16_t 		CyPythonGainVar = GAIN_DEF;
+
+uint16_t 		CyPythonGainVar = 0;
 CyBool_t        fCyPythonGainUpd = CyFalse;
-uint16_t 		CyPythonHueVar = HUE_DEF;
+
+uint16_t		CyPythonAGainVar = 0;
+CyBool_t        fCyPythonAGainUpd = CyFalse;
+
+
+uint16_t 		CyPythonHueVar = 0;
 CyBool_t        fCyPythonHueUpd = CyFalse;
-uint16_t 		CyPythonSaturationVar = SATURATION_DEF;
+uint16_t 		CyPythonSaturationVar = 0;
 CyBool_t        fCyPythonSaturationUpd = CyFalse;
 uint8_t			CyLM36011Brightness;
 CyBool_t		fCyLM36011Upd = CyFalse;
@@ -174,6 +182,8 @@ CyBool_t		fCyHV892Upd = CyFalse;
 uint8_t			CyLM36011Status = 0;
 CyBool_t		fCyOptoGenActive = CyFalse;
 CyBool_t		fCyOptoGenActiveFrame = CyFalse;
+
+CyBool_t 		fCyVersion = CyFalse;
 
 CyBool_t		fCyROIUpdateX = CyFalse;
 CyBool_t		fCyROIUpdateY = CyFalse;
@@ -194,7 +204,12 @@ CyBool_t 		fCyCamPair = CyFalse;
 CyBool_t		fEn_TriggerInput = CyFalse;
 
 CyBool_t 		fCyTemperture = CyFalse;
+uint16_t		CyPythonTemperture;
 
+CyBool_t		fCyBlackE;
+
+
+CyBool_t 		fCyPythonTemperture = CyFalse;
 uint16_t		CyTemperture;
 
 uint32_t RecordFrameCnt = 0;
@@ -1048,21 +1063,24 @@ CyU3PUpdateSensorSettings (
 {
 	if(fCyPythonExposureUpd)
 	{
-		CyFxSpiPythonWord(P480_EXPOSURE,CyPythonExposureVar);
+		CyFxSpiPythonWord(201,CyPythonExposureVar);
 		fCyPythonExposureUpd = CyFalse;
 	}
 
 	if(fCyPythonGainUpd)
 	{
-		CyFxSpiPythonWord(P480_DIGITAL_GAIN,CyPythonGainVar);
-		//CyFxSpiPythonWord(200,CyPythonGainVar);
-		//CyFxSpiPythonWord(384,CyPythonGainVar);
+		CyFxSpiPythonWord(205,CyPythonGainVar);
 		fCyPythonGainUpd = CyFalse;
+	}
+
+	if(fCyPythonAGainUpd)
+	{
+			CyFxSpiPythonWord(204,CyPythonAGainVar);
+			fCyPythonAGainUpd = CyFalse;
 	}
 
 	if(fCyPythonHueUpd)
 	{
-		//CyFxSpiPythonWord(209,CyPythonHueVar);
 		if( fEn_TriggerInput )
 		{
 			CyFxDUALLEDDriver(0);
@@ -1075,16 +1093,8 @@ CyU3PUpdateSensorSettings (
 	if(fCyLM36011Upd)
 	{
 
-			CyFxLM36011Brightness(CyLM36011Brightness);
-
-		//uint8_t buf[2];
-
-		//FPDLinkRead(LEDDRV_ADDR_RD,0x05,1,buf);
-		//CyLM36011Status = buf[0];
+		CyFxLM36011Brightness(CyLM36011Brightness);
 		fCyLM36011Upd = CyFalse;
-		//CyU3PEventSet (&glFxUARTEvent, CY_FX_UART_LEDDRV_STATUS_EVENT, CYU3P_EVENT_OR);
-
-
 	}
 
 
@@ -1094,6 +1104,24 @@ CyU3PUpdateSensorSettings (
 		if(glIsUartlnActive)
 			CyU3PEventSet (&glFxUARTEvent, CY_FX_UART_TEMP_DATA_EVENT, CYU3P_EVENT_OR);
 		fCyTemperture = CyFalse;
+
+		if( fCyBlackE)
+		{
+		    fCyBlackE = CyFalse;
+		}
+		else
+		{
+			fCyBlackE = CyTrue;
+		}
+	}
+
+	if(fCyPythonTemperture)
+	{
+		CyPythonTemperture = CyFxSpiPythonRWord(97);
+		if(glIsUartlnActive)
+			CyU3PEventSet (&glFxUARTEvent, CY_FX_UART_PYTHON_TEMP_DATA_EVENT, CYU3P_EVENT_OR);
+
+		fCyPythonTemperture = CyFalse;
 	}
 
 	if(fCyHV892Upd)
@@ -1112,11 +1140,11 @@ CyU3PUpdateSensorSettings (
 		{
 			if(CyBlackOffset > 512 )
 			{
-				CyFxSpiPythonWord(P480_BLACKCAL_OFFSET,((CyBlackOffset-512)<<1));
+				CyFxSpiPythonWord(129,((CyBlackOffset-512)<<1)|0x8000);
 			}
 			else
 			{
-				CyFxSpiPythonWord(P480_BLACKCAL_OFFSET,((512-CyBlackOffset)<<1)|0x400);
+				CyFxSpiPythonWord(129,((512-CyBlackOffset)<<1)|0x8400);
 			}
 		}
 		fCyBlackOffsetUpd = CyFalse;
@@ -1126,16 +1154,16 @@ CyU3PUpdateSensorSettings (
 	if(fCyAutoCalUpd)
 	{
 		if( fCyAutoCal )
-			CyFxSpiPythonWord(P480_BLACKCAL_OFFSET,0x8001);
+			CyFxSpiPythonWord(129,0x8001);
 		else
 		{
 			if(CyBlackOffset > 512 )
 			{
-				CyFxSpiPythonWord(P480_BLACKCAL_OFFSET,((CyBlackOffset-512)<<1));
+				CyFxSpiPythonWord(129,((CyBlackOffset-512)<<1)|0x8000);
 			}
 			else
 			{
-				CyFxSpiPythonWord(P480_BLACKCAL_OFFSET,((512-CyBlackOffset)<<1)|0x400);
+				CyFxSpiPythonWord(129,((512-CyBlackOffset)<<1)|0x8400);
 			}
 		}
 		fCyAutoCalUpd = CyFalse;
@@ -1160,6 +1188,8 @@ CyU3PUpdateSensorSettings (
 	if( fLEDUpdate )
 	{
 		uint8_t buf[2];
+
+
 		if(CyLEDStatus)
 		{
 
@@ -1172,17 +1202,10 @@ CyU3PUpdateSensorSettings (
 
 			//LED off
 			buf[0] = 0x05;
-				FPDLinkWrite(EXPA_ADDR_WR,0x05,1,buf);		//58mA
-
-
-
+			FPDLinkWrite(EXPA_ADDR_WR,0x05,1,buf);		//58mA
 		}
+		fLEDUpdate = CyFalse;
 	}
-
-
-
-
-
 }
 
 /* DMA callback providing notification when data buffers are received from the sensor and when they have
@@ -1254,8 +1277,6 @@ CyFxUvcApplnDmaCallback (
                 	dmaBuffer.buffer[Pixcnt++] = 0x5D;
                 else
                 	dmaBuffer.buffer[Pixcnt++] = 0x00;
-
-                fCyOptoGenActiveFrame = CyFalse;
                 dmaBuffer.buffer[Pixcnt++] = 0x80;
 
                 if(fCyOptoGenActiveFrame)
@@ -1263,6 +1284,7 @@ CyFxUvcApplnDmaCallback (
                 else
                 	dmaBuffer.buffer[Pixcnt++] = 0x00;
                 fCyOptoGenActiveFrame = CyFalse;
+
                 dmaBuffer.buffer[Pixcnt++] = 0x80;
 
                 dmaBuffer.buffer[Pixcnt++] = CY_U3P_DWORD_GET_BYTE3(RecordFrameCnt);
@@ -1393,6 +1415,11 @@ CyFxUvcApplnDmaCallback (
         	{
         			CyU3PEventSet (&glFxUARTEvent, CY_FX_UART_CMD_EVENT, CYU3P_EVENT_OR);
         			intEventCnt--;
+        	}
+        	if(fCyVersion == CyFalse)
+        	{
+        			CyU3PEventSet (&glFxUARTEvent, CY_FX_UART_VERSION_EVENT, CYU3P_EVENT_OR);
+        			fCyVersion = CyTrue;
         	}
 
             EndOfFrame = CyFalse;
@@ -2029,6 +2056,8 @@ CyFxUvcApplnStop()
     /* Allow USB low power link transitions at this stage. */
     CyU3PUsbLPMEnable ();
     //CyU3PDebugPrint (4, "Application Stopped\r\n");
+
+    fCyVersion = CyFalse;
 }
 
 void
@@ -2262,8 +2291,8 @@ UVCHandleProcessingUnitRqts (
                     CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                     break;
                 case CY_FX_USB_UVC_GET_MAX_REQ: /* Maximum brightness = 255. */
-                    glEp0Buffer[0] = CY_U3P_GET_LSB(EXPOSURE_MAX);
-                    glEp0Buffer[1] = CY_U3P_GET_MSB(EXPOSURE_MAX);
+                    glEp0Buffer[0] = CY_U3P_GET_LSB(25000);
+                    glEp0Buffer[1] = CY_U3P_GET_MSB(25000);
                     CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                     break;
                 case CY_FX_USB_UVC_GET_RES_REQ: /* Resolution = 1. */
@@ -2277,8 +2306,8 @@ UVCHandleProcessingUnitRqts (
                     CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                     break;
                 case CY_FX_USB_UVC_GET_DEF_REQ: /* Default brightness value = 55. */
-                    glEp0Buffer[0] = CY_U3P_GET_LSB(EXPOSURE_DEF);;
-                    glEp0Buffer[1] = CY_U3P_GET_MSB(EXPOSURE_DEF);
+                    glEp0Buffer[0] = CY_U3P_GET_LSB(25000);;
+                    glEp0Buffer[1] = CY_U3P_GET_MSB(25000);
                     CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                     break;
                 case CY_FX_USB_UVC_SET_CUR_REQ: /* Update brightness value. */
@@ -2288,7 +2317,7 @@ UVCHandleProcessingUnitRqts (
                     {
                         brightnessVal = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
                         /* Update the brightness value only if the value is within the range */
-                        if(brightnessVal >= 0 && brightnessVal <= EXPOSURE_MAX)
+                        if(brightnessVal >= 0 && brightnessVal <= 25000)
                         {
             				CyPythonExposureVar  = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
             				fCyPythonExposureUpd = CyTrue;
@@ -2321,8 +2350,8 @@ UVCHandleProcessingUnitRqts (
                         CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                         break;
                     case CY_FX_USB_UVC_GET_MAX_REQ: /* Maximum gain = 4095. */
-                        glEp0Buffer[0] = CY_U3P_GET_LSB(GAIN_MAX);
-                        glEp0Buffer[1] = CY_U3P_GET_MSB(GAIN_MAX);
+                        glEp0Buffer[0] = CY_U3P_GET_LSB(4096);
+                        glEp0Buffer[1] = CY_U3P_GET_MSB(4096);
                         CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                         break;
                     case CY_FX_USB_UVC_GET_RES_REQ: /* Resolution = 1. */
@@ -2336,8 +2365,8 @@ UVCHandleProcessingUnitRqts (
                         CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                         break;
                     case CY_FX_USB_UVC_GET_DEF_REQ: /* Default gain value = 300. */
-                        glEp0Buffer[0] = CY_U3P_GET_LSB(GAIN_DEF);
-                        glEp0Buffer[1] = CY_U3P_GET_MSB(GAIN_DEF);
+                        glEp0Buffer[0] = CY_U3P_GET_LSB(400);
+                        glEp0Buffer[1] = CY_U3P_GET_MSB(400);
                         CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                         break;
                     case CY_FX_USB_UVC_SET_CUR_REQ: /* Update gain value. */
@@ -2347,7 +2376,7 @@ UVCHandleProcessingUnitRqts (
                         {
                         	gainVal = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
                             /* Update the brightness value only if the value is within the range */
-                            if(gainVal >= 0 && gainVal <= GAIN_MAX)
+                            if(gainVal >= 0 && gainVal <= 4096)
                             {
                 				CyPythonGainVar  = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
                 				fCyPythonGainUpd = CyTrue;
@@ -2380,8 +2409,8 @@ UVCHandleProcessingUnitRqts (
                             CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                             break;
                         case CY_FX_USB_UVC_GET_MAX_REQ: /* Maximum hue = 255. */
-                            glEp0Buffer[0] = CY_U3P_GET_LSB(HUE_MAX);
-                            glEp0Buffer[1] = CY_U3P_GET_MSB(HUE_MAX);
+                            glEp0Buffer[0] = CY_U3P_GET_LSB(63);
+                            glEp0Buffer[1] = CY_U3P_GET_MSB(63);
                             CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                             break;
                         case CY_FX_USB_UVC_GET_RES_REQ: /* Resolution = 1. */
@@ -2395,8 +2424,8 @@ UVCHandleProcessingUnitRqts (
                             CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                             break;
                         case CY_FX_USB_UVC_GET_DEF_REQ: /* Default hue value = 0. */
-                            glEp0Buffer[0] = CY_U3P_GET_LSB(HUE_DEF);
-                            glEp0Buffer[1] = CY_U3P_GET_MSB(HUE_DEF);
+                            glEp0Buffer[0] = CY_U3P_GET_LSB(0);
+                            glEp0Buffer[1] = CY_U3P_GET_MSB(0);
                             CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                             break;
                         case CY_FX_USB_UVC_SET_CUR_REQ: /* Update hue value. */
@@ -2406,7 +2435,7 @@ UVCHandleProcessingUnitRqts (
                             {
                             	hueVal = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
                                 /* Update the brightness value only if the value is within the range */
-                                if(hueVal >= 0 && hueVal <= HUE_MAX)
+                                if(hueVal >= 0 && hueVal <= 63)
                                 {
                     				CyPythonHueVar  = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
                     				fCyPythonHueUpd = CyTrue;
@@ -2439,8 +2468,8 @@ UVCHandleProcessingUnitRqts (
                                                 CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                                                 break;
                                             case CY_FX_USB_UVC_GET_MAX_REQ: /* Maximum Saturation = SATURATION_MAX. */
-                                                glEp0Buffer[0] = CY_U3P_GET_LSB(SATURATION_MAX);
-                                                glEp0Buffer[1] = CY_U3P_GET_MSB(SATURATION_MAX);
+                                                glEp0Buffer[0] = CY_U3P_GET_LSB(1024);
+                                                glEp0Buffer[1] = CY_U3P_GET_MSB(1024);
                                                 CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                                                 break;
                                             case CY_FX_USB_UVC_GET_RES_REQ: /* Resolution = 1. */
@@ -2454,8 +2483,8 @@ UVCHandleProcessingUnitRqts (
                                                 CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                                                 break;
                                             case CY_FX_USB_UVC_GET_DEF_REQ: /* Default Saturation value = 0. */
-                                                glEp0Buffer[0] = CY_U3P_GET_LSB(SATURATION_DEF);
-                                                glEp0Buffer[1] = CY_U3P_GET_MSB(SATURATION_DEF);
+                                                glEp0Buffer[0] = CY_U3P_GET_LSB(0);
+                                                glEp0Buffer[1] = CY_U3P_GET_MSB(0);
                                                 CyU3PUsbSendEP0Data (2, (uint8_t *)glEp0Buffer);
                                                 break;
                                             case CY_FX_USB_UVC_SET_CUR_REQ: /* Update Saturation value. */
@@ -2465,7 +2494,7 @@ UVCHandleProcessingUnitRqts (
                                                 {
                                                 	SaturationVal = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
                                                     /* Update the brightness value only if the value is within the range */
-                                                    if(SaturationVal >= 0 && SaturationVal <= SATURATION_MAX)
+                                                    if(SaturationVal >= 0 && SaturationVal <= 1024)
                                                     {
                                         				CyPythonSaturationVar  = CY_U3P_MAKEWORD(glEp0Buffer[1], glEp0Buffer[0]);
                                         				fCyPythonSaturationUpd = CyTrue;
@@ -3200,6 +3229,8 @@ void  CyUSBUARThread_Entry(uint32_t input)
     						|CY_FX_UART_OPTO_DATA_EVENT
     						|CY_FX_UART_TRIG_REC_START_EVENT
     						|CY_FX_UART_TRIG_REC_STOP_EVENT
+    						|CY_FX_UART_PYTHON_TEMP_DATA_EVENT
+    						|CY_FX_UART_VERSION_EVENT
     						);
     uint32_t eventFlag;
 
@@ -3244,6 +3275,9 @@ void  CyUSBUARThread_Entry(uint32_t input)
 							case CMD_TEMP_RD:		fCyTemperture = CyTrue;
 													break;
 
+							case CMD_PYTEMP_RD:		fCyPythonTemperture = CyTrue;
+													break;
+
 							case CMD_EXCITATION:	CyPythonHueVar = CY_U3P_MAKEWORD(inBuf_p.buffer[2],inBuf_p.buffer[3]);
 													fCyPythonHueUpd = CyTrue;
 													break;
@@ -3254,6 +3288,10 @@ void  CyUSBUARThread_Entry(uint32_t input)
 
 							case CMD_GAIN:			CyPythonGainVar = CY_U3P_MAKEWORD(inBuf_p.buffer[2],inBuf_p.buffer[3]);
 													fCyPythonGainUpd = CyTrue;
+													break;
+
+							case CMD_AGAIN:			CyPythonAGainVar = CY_U3P_MAKEWORD(inBuf_p.buffer[2],inBuf_p.buffer[3]);
+													fCyPythonAGainUpd = CyTrue;
 													break;
 
 							case CMD_FOCUS:			CyHV892Var = CY_U3P_MAKEWORD(inBuf_p.buffer[2],inBuf_p.buffer[3]);
@@ -3281,11 +3319,15 @@ void  CyUSBUARThread_Entry(uint32_t input)
 													fCyLM36011Upd = CyTrue;
 													break;
 
-							case CMD_STIMULATE:		CyU3PTimerStop(&OptoGentimer);
-													CyU3PTimerModify(&OptoGentimer,OGStrDelay,0);
-													CyU3PTimerStart(&OptoGentimer);
-													OGLoop       = OGLoopCnt;
-													OGBurst      = OGBurstCnt;
+							case CMD_STIMULATE:		if(OGLoopCnt != 0 || OGBurstCnt != 0)
+													{
+															CyU3PTimerStop(&OptoGentimer);
+															CyU3PTimerModify(&OptoGentimer,OGStrDelay,0);
+															CyU3PTimerStart(&OptoGentimer);
+															OGLoop       = OGLoopCnt;
+															OGBurst      = OGBurstCnt;
+													}
+
 													break;
 
 							case CMD_TRIG_ON:		fEn_TriggerInput = CyTrue;
@@ -3442,6 +3484,44 @@ void  CyUSBUARThread_Entry(uint32_t input)
 								}
 							}
 					}
+	            	if(eventFlag & CY_FX_UART_PYTHON_TEMP_DATA_EVENT)
+					{
+						/* Wait for a free buffer to transmit the received data. The failure cases are same as above. */
+							status = CyU3PDmaChannelGetBuffer (&glChHandleUarttoUsb, &outBuf_p, CYU3P_WAIT_FOREVER);
+							if (status != CY_U3P_SUCCESS)
+							{
+								if (!glIsUartlnActive)
+								{
+									continue;
+								}
+								else
+								{
+									CyFxAppErrorHandler(status);
+								}
+							}
+
+
+							outBuf_p.count = 0;
+							outBuf_p.buffer[outBuf_p.count++] = 'P'; // Temperature Package
+							outBuf_p.count += itoa(CyPythonTemperture,(char *)outBuf_p.buffer+outBuf_p.count);
+							outBuf_p.buffer[outBuf_p.count++] = ';';
+							outBuf_p.buffer[outBuf_p.count++] = 0x0A;
+
+							outBuf_p.size = 1024;
+
+							status = CyU3PDmaChannelCommitBuffer (&glChHandleUarttoUsb, outBuf_p.count, 0);
+							if (status != CY_U3P_SUCCESS)
+							{
+								if (!glIsUartlnActive)
+								{
+									continue;
+								}
+								else
+								{
+									CyFxAppErrorHandler(status);
+								}
+							}
+					}
 
 		            if(eventFlag & CY_FX_UART_OPTO_DATA_EVENT)
 					{
@@ -3566,7 +3646,37 @@ void  CyUSBUARThread_Entry(uint32_t input)
 										}
 									}
 					}
+		            if(eventFlag & CY_FX_UART_VERSION_EVENT)
+					{
+									/* Wait for a free buffer to transmit the received data. The failure cases are same as above. */
+									status = CyU3PDmaChannelGetBuffer (&glChHandleUarttoUsb, &outBuf_p, CYU3P_WAIT_FOREVER);
+									if (status != CY_U3P_SUCCESS){
+										if (!glIsUartlnActive){
+											continue;
+										}
+										else{
+											CyFxAppErrorHandler(status);
+										}
+									}
 
+									outBuf_p.buffer[outBuf_p.count++] = 'V';	// Record Stop Package
+									outBuf_p.buffer[outBuf_p.count++] = '1';
+									outBuf_p.buffer[outBuf_p.count++] = '.';
+									outBuf_p.buffer[outBuf_p.count++] = '2';
+									outBuf_p.buffer[outBuf_p.count++] = 0x0A;
+									outBuf_p.size = 1024;
+
+									status = CyU3PDmaChannelCommitBuffer (&glChHandleUarttoUsb, outBuf_p.count, 0);
+									if (status != CY_U3P_SUCCESS)
+									{
+										if (!glIsUartlnActive){
+											continue;
+										}
+										else{
+											CyFxAppErrorHandler(status);
+										}
+									}
+					}
 				}
 		    }
 			else

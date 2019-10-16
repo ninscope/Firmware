@@ -29,32 +29,13 @@
 
 #include <cyu3types.h>
 
-#define EXPOSURE_DEF		25000
-#define EXPOSURE_MAX		25000
-
-#define GAIN_DEF			400
-#define GAIN_MAX			4096
-
-#define HUE_DEF				0
-#define HUE_MAX				63
-
-#define SATURATION_DEF		0
-#define SATURATION_MAX		1024
-
-
-/*Registers of the Python480*/
-#define P480_DIGITAL_GAIN		205
-#define P480_EXPOSURE			201
-#define P480_BLACKCAL_OFFSET	129
-
-
-
 /* I2C Slave address for the Ser/Deser sensor. DS90UB913/14*/
 // Added Andres
 #define DESER_ADDR_WR	0xC0
 #define DESER_ADDR_RD   0xC1
 #define SER_ADDR_WR		0xB0
 #define SER_ADDR_RD		0xB1
+
 
 /* I2C address for the DAC. */
 //Added by Daniel 8_10_2015
@@ -73,9 +54,6 @@
 #define LEDDUALDRV_ADDR_RD		0xC7
 
 #define LENS_HV892_ADDR_WR  0x46		//write only
-
-
-
 
 /* I2C Slave address for the image sensor. */
 #ifdef SADDR_HIGH
@@ -244,11 +222,9 @@ CyFxSpiPythonWord (
 		uint16_t SpiPyRegister ,
 		uint16_t SpiPyData16 );
 
-/* Function	:	CyFxDUALLEDDriver
- * Description : write to DAC for the Excitation LED
- * Parameters  :
- * 					VarCyFxDAC_LEDI2CWrite	- desired value
- */
+extern
+uint16_t
+CyFxSpiPythonRWord ( uint16_t SpiPyCmd );
 
 extern CyU3PReturnStatus_t
 CyFxDUALLEDDriver (

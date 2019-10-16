@@ -40,6 +40,7 @@
 
 #include "sensor.h"
 
+
 /* global and externals */
 uint16_t  CyPythonID;
 extern CyU3PSpiConfig_t spiConfig;								/* make it global to change it in the transmission */
@@ -554,13 +555,37 @@ CyPythonProgmmUpload ( void )
 
 }
 
+void
+CyPythonManageMPart1 ( void )
+{
+
+		  CyFxSpiPythonWord(2,  0x0000);// Monochrome sensor
+		  CyFxSpiPythonWord(17, 0x2113);// Configure PLL
+		  CyFxSpiPythonWord(20, 0x0000);// Configure clock management
+		  CyFxSpiPythonWord(26, 0x2280);// Configure PLL lock detector
+		  CyFxSpiPythonWord(27, 0x3D2D);// Configure PLL lock detector
+		  CyFxSpiPythonWord(32, 0x2004);// PLL input clock
+		  CyFxSpiPythonWord(8,  0x0000);// Release PLL soft reset
+		  CyFxSpiPythonWord(16, 0x0003);// Enable PLL
+
+}
+
+
+
+void
+CyPythonManageMPart2 ( void )
+{
+		CyFxSpiPythonWord(9,  0x0000);	// Release clock generator Soft Reset
+		CyFxSpiPythonWord(32, 0x7006);	// Enable logic clock
+		CyFxSpiPythonWord(34, 0x0001);	// Enable logic block
+}
 
 
 void
 CyPythonManageMPart1_PLL_bypass ( void )
 {
-			CyFxSpiPythonWord(2, 0x0002);	//	# Monochrome sensor - for color use 0x0003
-			CyFxSpiPythonWord(32, 0x700C);	//# Configure clock management
+			CyFxSpiPythonWord(2,  0x0002);	//# Monochrome sensor - for color use 0x0003
+			CyFxSpiPythonWord(32, 0x300C);	//# Configure clock management
 			CyFxSpiPythonWord(20, 0x0000);	//# Configure clock management
 			CyFxSpiPythonWord(16, 0x0007);	//# Configure PLL bypass mode
 }
@@ -569,9 +594,9 @@ CyPythonManageMPart1_PLL_bypass ( void )
 void
 CyPythonManageMPart2_PLL_bypass  ( void )
 {
-		CyFxSpiPythonWord(9, 0x0000);		// Release clock generator Soft Reset
-		CyFxSpiPythonWord(32, 0x700E);	// Enable logic clock
-		CyFxSpiPythonWord(34, 0x0001);	// Enable logic blocks
+		CyFxSpiPythonWord(9,  0x0000);		// Release clock generator Soft Reset
+		CyFxSpiPythonWord(32, 0x700F);	    // Enable logic clock
+		CyFxSpiPythonWord(34, 0x0001);	    // Enable logic blocks
 }
 
 
@@ -579,126 +604,293 @@ CyPythonManageMPart2_PLL_bypass  ( void )
 void
 CyPythonSpiUploads( void )
 {
-	  CyFxSpiPythonWord(2, 0x0000);
-	  CyFxSpiPythonWord(8, 0x0000);			//Reset Generator
-	  CyFxSpiPythonWord(9, 0x0000);			//Reset Generator
-	  CyFxSpiPythonWord(10, 0x0000);
-	  CyFxSpiPythonWord(20, 0x0000);
-	  //CyFxSpiPythonWord(24, 0x0001);	disabled in PLL bypass mode
-	  //CyFxSpiPythonWord(26, 0x2280);	disabled in PLL bypass mode
-	  //CyFxSpiPythonWord(27, 0x3D2D);	disabled in PLL bypass mode
-	  CyFxSpiPythonWord(32, 0x700F);  // Divide by 5 off// CyFxSpiPythonWord(32, 0x7007);  // Enable analog clock
-	  CyFxSpiPythonWord(34, 0x0001);
-	  CyFxSpiPythonWord(40, 0x0003);
-	  CyFxSpiPythonWord(41, 0x085F);
-	  CyFxSpiPythonWord(42, 0x4103);	//CyFxSpiPythonWord(42, 0x4103);	new	0x4113
-	  CyFxSpiPythonWord(43, 0x0518);
-	  CyFxSpiPythonWord(48, 0x0001);
-	  CyFxSpiPythonWord(64, 0x0001);
-	  CyFxSpiPythonWord(65, 0x382B);
 
-	  //orginal
-	  CyFxSpiPythonWord(66, 0x53C8);
-	  CyFxSpiPythonWord(67, 0x0665);
-	  CyFxSpiPythonWord(68, 0x0085);
-	  CyFxSpiPythonWord(69, 0x0888);
+	  //IMAGE CORE
+	  //CyFxSpiPythonWord(40, 0x0003);	//image_core_config0 DEF 0x0000	IDS 0x0003 SCR 0x0003
+	  	  	  	  	  	  	  	  	    //[0] imc_pwd_n 0x0 0 Image Core Power Down ‘0’: powered down,	  ‘1’: powered up
+	  	  	  	  	  	  	  	  	  	//[1] mux_pwd_n 0x0 0 Column Multiplexer Power Down ‘0’: powered down, ‘1’: powered up
+	  	  	  	  	  	  	  	  	  	//[2] colbias_enable 0x0 0 Bias Enable	  ‘0’: disabled	  ‘1’: enabled
 
-	  //90mA
-	  //CyFxSpiPythonWord(66, 0x53c3);
-	  //CyFxSpiPythonWord(67, 0x0434);
-	  //CyFxSpiPythonWord(68, 0x0000);
-	  //CyFxSpiPythonWord(69, 0x0828);
+	  CyFxSpiPythonWord(41, 0x085F);	//image_core_config1 DEF 0x085A IDS 0x085C SCR 0x085F
+	  	  	  	  	  	  	  	  	  	//[3:0]   dac_ds 0xA 10 Double Slope Reset Level
+	  	  	  	  	  	  	  	  	  	//[7:4]   dac_ts 0x5 5 Triple Slope Reset Level
+										//[10:8]  reserved 0x3 3 Reserved
+										//[12:11] reserved 0x1 1 Reserved
+										//[13]    reserved 0x0 0 Reserved
+										//[14]    reserved 0x0 0 Reserved
+										//[15]    reserved 0x0 0 Reserved
 
-	  CyFxSpiPythonWord(70, 0x4800);
-	  CyFxSpiPythonWord(71, 0x8888);
-	  CyFxSpiPythonWord(72, 0x0117);
-	  CyFxSpiPythonWord(112, 0x0007);
-	  //CyFxSpiPythonWord(128, 0x470A);	desired black level output
-	  CyFxSpiPythonWord(128, 0x470A );		//WriteSPI(128, 0x470A) new 0x4714
-	  CyFxSpiPythonWord(129, 0x8001);
-	  CyFxSpiPythonWord(130, 0x0015);    //CyFxSpiPythonWord(130, 0x0001); bl_frame_valid_enable = 0;
-	  CyFxSpiPythonWord(192, 0x0801);
-	  CyFxSpiPythonWord(194, 0x00E4);  // reverse x and y enabled for demo kit compatibility:fr_mode = 1
-	  CyFxSpiPythonWord(197, 0x030A);  // blacklines
-	  CyFxSpiPythonWord(199, 0x0299);  // mult-Timer    DEC 665
-	  CyFxSpiPythonWord(200, 0x0350);
-	  CyFxSpiPythonWord(201, 0x01F4);
-	  CyFxSpiPythonWord(204, 0x0031); 	//# (gain 2x : 0x00E4 // gain 3.5x : 0x0024) new
-	  CyFxSpiPythonWord(207, 0x0014);
-	  //CyFxSpiPythonWord(208,0xC900);	Read delay or something like it	//Frame overhead time steps 10,3us
-	  CyFxSpiPythonWord(214, 0x0100);	// overhead time end ~12 us
-	  CyFxSpiPythonWord(215, 0x101F );	//WriteSPI(215, 0x101F) new 0x111F
-	  CyFxSpiPythonWord(216, 0x0000);
-	  CyFxSpiPythonWord(219, 0x0023);
-	  CyFxSpiPythonWord(220, 0x3C2B);   //
-	  CyFxSpiPythonWord(221, 0x2B4D );  // WriteSPI(221, ) new 0x004D
-	  CyFxSpiPythonWord(224, 15873);  //space in between lines
-	  CyFxSpiPythonWord(211, 0x0049);
-	  CyFxSpiPythonWord(216, 0x0000);
-	  CyFxSpiPythonWord(219, 0x0023);
-	  CyFxSpiPythonWord(220, 0x3C2B);
-	  CyFxSpiPythonWord(230, 0x0299); //new
-	  CyFxSpiPythonWord(231, 0x0350);//new
-	  CyFxSpiPythonWord(232, 0x01F4);//new
-	  CyFxSpiPythonWord(235, 0x00E1);//new
 
-	  CyFxSpiPythonWord(96, 0x0001); //Temperatuur
+	  CyFxSpiPythonWord(42, 0x4113);	//reserved DEF 0x0003 IDS 0x4113 SCR 0x4113
+										//[0] reserved 0x1 1 Reserved
+										//[1] reserved 0x1 1 Reserved
+										//[6:4] reserved 0x0 0 Reserved
+										//[10:8] reserved 0x0 0 Reserved
+										//[15:12] reserved 0x0 0 Reserved
+
+	  CyFxSpiPythonWord(43, 0x0518);	//reserved DEF 0x0508 IDS 0x051C SCR 0x0518
+										//[0]    reserved 0x0 0 Reserved
+										//[1]    reserved 0x0 0 Reserved
+										//[2]    reserved 0x0 0 Reserved
+										//[3]    reserved 0x0 0 Reserved
+										//[6:4]  reserved 0x0 0 Reserved
+										//[15:7] reserved 0x0 0 Reserved
+
+
+	  //AFE
+	  CyFxSpiPythonWord(48, 0x0001);	//AFE Configuration DEF 0x0000 IDS 0x0001 SCR 0x0001
+	  	  	  	  	  	  	  	  	    //[0] pwd_n 0x0 0 Power down for AFE’s ‘0’: powered down,‘1’: powered up
+
+
+	  //BIAS
+	  CyFxSpiPythonWord(64, 0x0001);	//Bias Power Down Configuration DEF 0x0000 IDS 0x0001 SCR 0x0001
+	  	  	  	  	  	  	  	  	  	//[0] pwd_n 0x0 0 Power down bandgap ‘0’: powered down, ‘1’: powered up
+
+
+	  CyFxSpiPythonWord(65, 0x282B);    //Bias Configuration DEF 0xF8CB IDS 0x382B SCR 0x382B
+	  	  	  	  	  	  	  	  	  	//[0]     extres   0x1 1 External Resistor Selection ‘0’: internal resistor,‘1’: external resistor
+										//[3:1]   reserved 0x5 5 Reserved
+										//[7:4]   imc_colpc_ibias - Column Precharge ibias Configuration	//P1300
+										//[11:8]  imc_colbias_ibias - Column Bias ibias Configuration		//P1300
+										//[15:12] cp_ibias - Charge Pump Bias								//P1300
+
+	  CyFxSpiPythonWord(66, 0x51A2);	//AFE Bias Configuration DEF 0x53C8 IDS 0x53C8  SCR 0x53C8
+										//[3:0]  afe_ibias    0x8  8  AFE ibias Configuration	//P1300
+										//[7:4]  afe_adc_iref 0xC  12 ADC iref Configuration	//P1300
+										//[14:8] afe_pga_iref 0x53 83 PGA iref Configuration	//P1300
+
+	  CyFxSpiPythonWord(67, 0x0332);	//Column Multiplexer Bias Configuration DEF 0x8788 IDS 0x0565 SCR 0x0665
+										//[3:0]   mux_25u_stage1 0x8 8 Column Multiplexer Stage 1 Bias Configuration 	//P1300
+										//[7:4]   mux_25u_stage2 0x8 8 Column Multiplexer Stage 2 Bias Configuration	//P1300
+										//[11:8]  mux_25u_delay  0x8 8 Column Multiplexer Delay Bias Configuration		//P1300
+	  	  	  	  	  	  	  	  	  	//[15:12] reserved       0x8 8 Reserved											//P1300
+
+	  CyFxSpiPythonWord(68, 0x0000);    //LVDS Bias Configuration DEF 0x0085 IDS 0x0085 SCR 0x0085
+										//[3:0] lvds_ibias 0x5 5 LVDS Ibias //P1300
+										//[7:4] lvds_iref  0x8 8 LVDS Iref  //P1300
+
+	  CyFxSpiPythonWord(69, 0x0024);    //LVDS Bias Configuration DEF 0x0088 IDS 0x0088 SCR 0x0888
+										//[3:0] imc_vsfdmed_ibias 0x8 8 VSFD Medium Bias //P1300
+										//[7:4] adcref_ibias 0x8 8 ADC Reference Bias    //P1300
+
+
+	  CyFxSpiPythonWord(70, 0x4800);	//reserved DEF 0x4111 IDS 0x4800 SCR 0x4800
+										//[3:0]   reserved 0x1 1 Reserved
+										//[7:4]   reserved 0x1 1 Reserved
+										//[11:8]  reserved 0x1 1 Reserved
+										//[15:12] reserved 0x4 4 Reserved
+
+	  CyFxSpiPythonWord(71, 0x8888);	//reserved DEF 0x9788 IDS 0x8888 SCR 0x8888
+	  	  	  	  	  	  	  	  	  	//[15:0]  reserved 0x9788 38792 Reserved
+
+	  //CHARGE PUMP
+	  CyFxSpiPythonWord(72, 0x0127);	//Charge Pump Configuration DEF 0x2220 IDS 0x127 SCR 0x0117
+										//[0] trans_pwd_n         0x0 0 PD Trans Charge Pump Enable ‘0’: disabled, ‘1’: enabled
+										//[1] resfd_calib_pwd_n   0x0 0 FD Charge Pump Enable ‘0’: disabled, ‘1’: enabled
+										//[2] sel_sample_pwd_n    0x0 0 Select/Sample Charge Pump Enable ‘0’: disabled ‘1’: enabled
+										//[6:4] trans_trim        0x2 2 PD Trans Charge Pump Trim
+										//[10:8] resfd_calib_trim 0x2 2 FD Charge Pump Trim
+										//[14:12] sel_sample_trim 0x2 2 Select/Sample Charge Pump Trim
+
+
+	  //DATA
+	  CyFxSpiPythonWord(128, 0x4700  ); //Black Calibration Configuration DEF 0x4008 IDS 0x4714 SCR 0x470A
+										//[7:0] black_offset 	0x08 8 Desired black level at output
+										//[10:8] black_samples 	0x0  0 Black pixels taken into account for black calibration.Total samples = 2**black_samples
+										//[14:11] reserved 		0x8  8 Reserved
+										//[15] crc_seed 		0x0  0 CRC Seed ‘0’: All-0 ‘1’: All-1
+
+	  CyFxSpiPythonWord(129, 0xA001 );	//Black Calibration and Data Formating Configuration DEF 0x0001 IDS 0x8001 SCR 0x8001
+										//[0]   auto_blackcal_enable 0x1 1 Automatic blackcalibration is enabled when 1, bypassed when 0
+										//[9:1] blackcal_offset 0x00 0 Black Calibration offset used when auto_black_cal_en = ‘0’.
+										//[10]  blackcal_offset_dec 0x0 0 blackcal_offset is added when 0, subtracted when 1
+										//[11]  reserved 0x0 0 Reserved
+										//[12]  reserved 0x0 0 Reserved
+										//[13]  Mode ‘0’: 8-bit ‘1’: 10bit
+										//[14]  ref_mode 0x0 0 Data contained on reference lines: ‘0’: reference pixels ‘1’: black average for the corresponding data channel
+										//[15]  ref_bcal_enable 0x0 0 Enable black calibration on reference lines ‘0’: Disabled ‘1’: Enabled
+
+
+	  CyFxSpiPythonWord(130, 0x0015);   //Data Formating - Training Pattern DEF 0x000F IDS 0x000F SCR 0x0001 - changed for GPIF block USB controller
+										//[0] bl_frame_valid_enable	  0x1 1 Assert frame_valid for black lines when ‘1’,	  gate frame_valid for black lines when ‘0’.	  Parallel output mode only.
+										//[1] bl_line_valid_enable    0x1 1 Assert line_valid for black lines when ‘1’, gate	  line_valid for black lines when ‘0’.	  Parallel output mode only.
+										//[2] ref_frame_valid_enable  0x1 1 Assert frame_valid for ref lines when ‘1’, gate	  frame_valid for black lines when ‘0’.	  Parallel output mode only.
+										//[3] ref_line_valid_enable   0x1 1 Assert line_valid for ref lines when ‘1’, gate	  line_valid for black lines when ‘0’.	  Parallel output mode only.
+										//[4] frame_valid_mode        0x0 0 Behaviour of frame_valid strobe between	  overhead lines when [0] and/or [1] is	  deasserted:	  ‘0’: retain frame_valid deasserted between	  lines	  ‘1’: assert frame_valid between lines
+										//[5] invert_bitstream        0x0 0 Negative Image	  ‘0’: Normal	  ‘1’: Negative
+										//[8] data_negedge            0x0 0 Clock−Data Relation	  ‘0’: data is clocked out on the rising edge of	  the related clock	  ‘1’: data is clocked out on the falling edge of	  the related clock
+										//[9] reserved                0x0 0 Reserved
+
+	  //IDS 175 0x0080 DEF 0x0080	reserved
+	  //IDS 177 0x0400 DEF 0x0100   reserved
+
+	  CyFxSpiPythonWord(177, 0x0400);
+
+
+	  //SEQUENCER
+	  CyFxSpiPythonWord(192, 0x0801);	//Sequencer General Configuration DEF 0x0002 IDS 0x0002 SCR 0x0801
+										//[0] enable             0x0 0 Enable sequencer	  ‘0’: Idle,	  ‘1’: enabled
+										//[1] fast_startup       0x1 1 Fast startup  ‘0’: First frame is full frame (blanked out)	  ‘1’: Reduced startup time
+										//[2] reserved           0x0 0 Reserved
+										//[3] reserved           0x0 0 Reserved
+										//[4] triggered_mode     0x0 0 Triggered Mode Selection	  ‘0’: Normal Mode,	  ‘1’: Triggered Mode
+										//[5] slave_mode         0x0 0 Master/Slave Selection	  ‘0’: master,	  ‘1’: slave
+										//[6] reserved           0x0 0 Reserved
+										//[7] subsampling        0x0 0 Subsampling mode selection	  ‘0’: no subsampling,	  ‘1’: subsampling
+										//[8] reserved           0x0 0 Reserved
+										//[10] roi_aec_enable    0x0 0 Enable windowing for AEC Statistics.	  ‘0’: Subsample all windows	  ‘1’: Subsample configured window
+										//[13:11] monitor_select 0x0 0 Control of the monitor pins
+										//[14] reserved          0x0 0 Reserved
+										//[15] sequence          0x0 0 Enable a sequenced readout with different	  parameters for even and odd frames
+
+	  CyFxSpiPythonWord(194, 0x00E4);   // Integration Control DEF 0x00E4 IDS 0x00E4 SCR 0x03E4
+										//[0]     reserved         0x0 0 Reserved
+										//[1]     reserved         0x0 0 Reserved
+										//[2]     fr_mode          0x1 1 Representation of fr_length. ‘0’: reset length  ‘1’: frame length
+										//[3]     reserved         0x0 0 Reserved
+										//[4]     int_priority     0x0 0 Integration Priority ‘0’: Frame readout has priority over integration  ‘1’: Integration End has priority over frame readout
+										//[5]     halt_mode        0x1 1 The current frame will be completed when the sequencer is disabled and halt_mode = ‘1’. When ‘0’, the sensor stops immediately when disabled, without finishing the current frame.
+										//[6]     fss_enable       0x1 1 Generation of Frame Sequence Start Sync  code (FSS)  ‘0’: No generation of FSS  ‘1’: Generation of FSS
+										//[7]     fse_enable       0x1 1 Generation of Frame Sequence End Sync  code (FSE) ‘0’: No generation of FSE  ‘1’: Generation of FSE
+										//[8]     reverse_y        0x0 0 Reverse readout  ‘0’: bottom to top readout  ‘1’: top to bottom readout
+										//[9] 	  reverse_x        0x0 0 Reverse readout (X−direction)  ‘0’: left to right  ‘1’: right to left
+										//[11:10] subsampling_mode 0x0 0 Subsampling mode  “00”: Subsampling in x and y (VITA  compatible)  “01”: Subsampling in x, not y  “10”: Subsampling in y, not x  “11”: Subsampling in x an y
+										//[13:12] reserved         0x0 0 Reserved
+										//[14]    reserved         0x0 0 Reserved
+										//[15]    reserved         0x0 0 Reserved
+
+
+	  CyFxSpiPythonWord(197, 0x030A);  //Black Line Configuration DEF 0x0104 IDS 0x0105 SCR 0x030A
+									   //[7:0]  black_lines     0x04 4 Number of black lines. Minimum is 1.	  Range 1-255
+									   //[12:8] gate_first_line 0x1  1 Blank out first lines	  0: no blank	  1-31: blank 1-31 lines
+
+	  CyFxSpiPythonWord(199, 0x0299);  // Exposure/Frame Rate Configuration DEF 0x0001 IDS 0x069E SCR 0x0299
+	  	  	  	  	  	  	  	  	   //[15:0] mult_timer0 0x0001 1 Mult Timer (Global shutter only)	  Defines granularity (unit = 1/PLL clock) of	  exposure and reset_length
+
+	  CyFxSpiPythonWord(200, 0x0350);  //Exposure/Frame Rate Configuration DEF 0x0000 IDS 0x026E SCR 0x0350
+	  	  	  	  	  	  	  	  	   //[15:0] fr_length0 0x0000 0 Frame/Reset length (Global shutter only)	  Reset length when fr_mode = ‘0’,	  Frame Length when fr_mode = ‘1’
+
+	  CyFxSpiPythonWord(201, 0x01F4);  //Exposure/Frame Rate Configuration DEF 0x0000 IDS 0x0028 SCR 0x01F4
+	  	  	  	  	  	  	  	  	   //[15:0] exposure0 0x0000 0 Exposure Time  Granularity defined by mult_timer
+
+	  CyFxSpiPythonWord(204, 0x00C1);  //Gain Configuration DEF 0x01E1 IDS 0x00E3 SCR 0x00E1
+									   //[4:0]  mux_gainsw0   0x01 1  Column Gain Setting
+									   //[12:5] afe_gain0     0xF  15 AFE Programmable Gain Setting  # (gain 2x : 0x00E4 // gain 3.5x : 0x0024) new
+									   //[13]   gain_lat_comp 0x0  0  Postpone gain update by 1 frame when ‘1’ to compensate for exposure time updates latency. Gain is applied at start of next frame if ‘0’
+
+	  CyFxSpiPythonWord(207, 0x0000); //Reference Line Configuration DEF 0x0000 IDS 0x0000 SCR 0x0014
+	  	  	  	  	  	  	  	  	  //[7:0] ref_lines 0x00 0 Number of Reference Lines 0-255
+
+	  CyFxSpiPythonWord(208, 0xC900); //reserved DEF 0xC900 IDS	0xC900 SCR NOT ASS	- Readout delay or something like it	//Frame overhead time steps 10,3us
+	  	  	  	  	  	  	  	  	  //[7:0]  reserved 0x00 0   Reserved
+	  	  	  	  	  	  	  	  	  //[15:8] reserved 0xC9 201 Reserved
+
+	  //IDS 209 0x0004 DEF 0x0004
+	  //IDS 211 0x0049 DEF 0x0049
+
+	  CyFxSpiPythonWord(214, 0x0100); //Reserved DEF 0x0100 IDS 0x0100 SCR 0x0100   overhead time end ~12 us
+	  	  	  	  	  	  	  	  	  //[7:0] reserved 0x00 0 Reserved
+
+	  CyFxSpiPythonWord(215, 0x191F );	//Reserved DEF 0x191F IDS 0x191F SCR 0x101F
+										//[0] reserved 0x1 1 Reserved
+										//[1] reserved 0x1 1 Reserved
+										//[2] reserved 0x0 0 Reserved
+										//[3] reserved 0x0 0 Reserved
+										//[4] reserved 0x0 0 Reserved
+										//[5] reserved 0x0 0 Reserved
+										//[6] reserved 0x0 0 Reserved
+										//[7] reserved 0x0 0 Reserved
+										//[8] reserved 0x1 1 Reserved
+										//[9] reserved 0x0 0 Reserved
+										//[10] reserved 0x0 0 Reserved
+										//[11] reserved 0x0 0 Reserved
+										//[12] reserved 0x0 0 Reserved
+										//[13] reserved 0x0 0 Reserved
+										//[14] reserved 0x0 0 Reserved
+
+	  CyFxSpiPythonWord(216, 0x0000);  //Reserved DEF 0x0000 IDS 0x0000 SCR 0x0000
+	  	  	  	  	  	  	  	  	   //[6:0] reserved 0x00 0 Reserved
+
+	  CyFxSpiPythonWord(219, 0x0023); //Reserved DEF 0x005C IDS 0x0022 SCR 0x0023
+									  //[6:0]  reserved 0x05C 92 Reserved
+									  //[14:8] reserved 0x00  0 Reserved
+
+
+	  CyFxSpiPythonWord(220,0x3C2B); //Reserved DEF 0x3624 IDS 0x3B2A  SCR 0x3C2B  E-black calibration image 0x3C2B  E-gray calibration 0x3C4D
+									 //[6:0]  reserved 0x24 36 Reserved
+									 //[14:8] reserved 0x36 54 Reserved
+
+
+	  CyFxSpiPythonWord(221,0x2B4D); //Reserved DEF 0x6245 IDS 0x624A SCR 0x2B4D
+	  	  	  	  	  	  	  	  	 //[6:0]   reserved 0x45 69 Reserved
+	  	  	  	  	  	  	  	  	 //[14:8]  reserved 0x62 98 Reserved
+
+	  CyFxSpiPythonWord(222,0x6230); //Reserved DEF 0x6230 IDS 0x624A SCR NOTASS
+	  	  	  	  	  	  	  	  	 //[6:0]  reserved 0x30 48 Reserved
+	  	  	  	  	  	  	  	  	 //[14:8] reserved 0x62 98 Reserved
+
+	  CyFxSpiPythonWord(224, 0x3E01); //Reserved DEF 0x3E01 IDS 0x3EEE SCR 0x3E5E  //space in between lines
+									 //[3:0] reserved 0x1  1 Reserved
+									 //[7:4] reserved 0x00 0 Reserved
+									 //[8]   reserved 0x0  0 Reserved
+									 //[9]   reserved 0x1  1 Reserved
+									 //[10]  reserved 0x1  1 Reserved
+									 //[11]  reserved 0x1  1 Reserved
+									 //[12]  reserved 0x1  1 Reserved
+									 //[13]  reserved 0x1  1 Reserved
+
+	  //IDS 227 0x0000 DEF 0x0000
+
+	  CyFxSpiPythonWord(211,0x0049); //Reserved DEF 0x0049 IDS NOTASS SCR 0x0049
+									 //[0] reserved 0x1 1 Reserved
+									 //[1] reserved 0x0 0 Reserved
+									 //[2] reserved 0x0 0 Reserved
+									 //[3] reserved 0x1 1 Reserved
+									 //[6:4] reserved 0x4 4 Reserved
+									 //[15:8] reserved 0x0 0 Reserved
+
+	  CyFxSpiPythonWord(216,0x0000); //Reserved DEF 0x0000 IDS NOTASS SCR 0x0000
+	  	  	  	  	  	  	  	  	 //[6:0] reserved 0x00 0 Reserved
+
+	  CyFxSpiPythonWord(219,0x0023); //Reserved DEF 0x005C IDS NOTASS SCR 0x0023
+									 //[6:0]  reserved 0x05C 92 Reserved
+									 //[14:8] reserved 0x00 0 Reserved
+
+	  CyFxSpiPythonWord(220,0x3C2B); //Reserved DEF 0x3624 IDS 0x3B2A  SCR 0x3C2B  E-black calibration image 0x3C2B  E-gray calibration 0x3C4D
+									 //[6:0]  reserved 0x24 36 Reserved
+									 //[14:8] reserved 0x36 54 Reserved
+
+
+	  CyFxSpiPythonWord(221,0x2B4D); //Reserved DEF 0x6245 IDS 0x624A SCR 0x2B4D
+	  	  	  	  	  	  	  	  	 //[6:0]   reserved 0x45 69 Reserved
+	  	  	  	  	  	  	  	  	 //[14:8]  reserved 0x62 98 Reserved
+
+
+	  CyFxSpiPythonWord(230,0x0299); //Reserved DEF 0x0001
+	  CyFxSpiPythonWord(231,0x0350); //Reserved DEF 0x0000
+	  CyFxSpiPythonWord(232,0x01F4); //Reserved DEF 0x0000
+	  CyFxSpiPythonWord(235,0x00E1); //Reserved DEF 0x0000
+
+	  CyFxSpiPythonWord(96, 0x0001); //Temperature Sensor Configuration DEF 0x0000
+									 //[0]    enable   0x0 0 Temperature Diode Enable ‘0’: disabled, ‘1’: enabled
+									 //[1]    reserved 0x0 0 Reserved
+									 //[2]    reserved 0x0 0 Reserved
+									 //[3]    reserved 0x0 0 Reserved
+									 //[4]    reserved 0x0 0 Reserved
+									 //[5]    reserved 0x0 0 Reserved
+									 //[13:8] offset   0x0 0 Temperature Offset (signed)
 }
 
-
-
-void
-CyPythonSoftPowerUp ( void )
-{
-	  CyFxSpiPythonWord(10, 0x0000);  // Release soft reset state
-	  CyFxSpiPythonWord(32, 0x700F);  // Divide by 5 off// CyFxSpiPythonWord(32, 0x7007);  // Enable analog clock
-	  CyFxSpiPythonWord(40, 0x0003);  // Enable column multiplexer
-	  CyFxSpiPythonWord(42, 0x4113);  // Configure image core
-	  CyFxSpiPythonWord(48, 0x0001);  // Enable AFE
-	  CyFxSpiPythonWord(64, 0x0001);  // Enable biasing block
-	  CyFxSpiPythonWord(72, 0x0127);  // Enable charge pump
-	  CyFxSpiPythonWord(112, 0x0000); // Disable LVDS transmitters
-
-}
-
-void
-CyPythonFrameSet(void )
-{
-
-	// MultiTimer @ 66.6Mhz/PLL Bypass(/4)) = 60.06nS x 20 = 1.2uS
-	CyFxSpiPythonWord(199, 20);//14); // Multi - Timer CyFxSpiPythonWord(199, 0x0048); // Multi - Timer
-	// frame lenght for 30fps = 33.33333333mS / 1.2012uS = 27750 = 0x‭6C66‬
-	CyFxSpiPythonWord(200,27609);//0x6AE0);// 0x6AF4);//0x61A8);
-}
-
-void
-CyPythonROISet ( void )
-{
-
-		CyFxSpiPythonWord(256,  49671); //07 xstart 194 xend//0xBB00); //
-		CyFxSpiPythonWord(257,  34832); //08 //0x7700); //
-		CyFxSpiPythonWord(258,  0x3B14); //
-		CyFxSpiPythonWord(259,  0xBB44); //
-
-		CyFxSpiPythonWord(260, 0); //
-		CyFxSpiPythonWord(261, 0); //
-		CyFxSpiPythonWord(262, 0); //
-		CyFxSpiPythonWord(263, 0); //
-
-		CyFxSpiPythonWord(263, 0); //
-		CyFxSpiPythonWord(264, 20);//C4); //
-		CyFxSpiPythonWord(265, 0); //
-}
 
 
 void
 CyPythonPowerDown (void )
 {
-	  CyFxSpiPythonWord(112, 0x0999); // Soft reset
+	  //CyFxSpiPythonWord(112, 0x0999); // Soft reset
 	  CyFxSpiPythonWord(72, 0x7006);  // Disable analog clock
 	  CyFxSpiPythonWord(64, 0x0000);  // Disable column multiplexer
-	  CyFxSpiPythonWord(48, 0x4110);  // Image core config
-	  CyFxSpiPythonWord(42, 0x0000);  // Disable AFE
+	  CyFxSpiPythonWord(42, 0x4110);  // Image core config
+	  CyFxSpiPythonWord(48, 0x0000);  // Disable AFE
 	  CyFxSpiPythonWord(40, 0x0000);  // Disable biasing block
 	  CyFxSpiPythonWord(32, 0x0010);  // Disable charge pump
 	  CyFxSpiPythonWord(10, 0x0000);  // Disable LVDS transmitters
@@ -711,6 +903,68 @@ CyPythonPowerDown (void )
 	  CyFxSpiPythonWord(8,  0x0000);//2 8 0x0000 Disable PLL
 
 }
+
+
+void
+CyPythonSoftPowerUp ( void )
+{
+
+
+	  CyFxSpiPythonWord(10, 0x0000);  // Release soft reset state
+	  CyFxSpiPythonWord(32, 0x700F);  // Divide by 5 off// CyFxSpiPythonWord(32, 0x7007);  // Enable analog clock
+	  CyFxSpiPythonWord(40, 0x0003);  // Enable column multiplexer
+	  CyFxSpiPythonWord(42, 0x4113);  // Configure image core
+	  CyFxSpiPythonWord(48, 0x0001);  // Enable AFE
+	  CyFxSpiPythonWord(64, 0x0001);  // Enable biasing block
+	  CyFxSpiPythonWord(72, 0x0127);  // Enable charge pump
+	  //CyFxSpiPythonWord(112, 0x0000); // Disable LVDS transmitters
+
+}
+
+void
+CyPythonFrameSet_PLL_Bypass(void )
+{
+
+	// MultiTimer @ 66.6Mhz/PLL Bypass(/4)) = 60.06nS x 20 = 1.2uS
+	CyFxSpiPythonWord(199, 20);//14); // Multi - Timer CyFxSpiPythonWord(199, 0x0048); // Multi - Timer
+	// frame lenght for 30fps = 33.33333333mS / 1.2012uS = 27750 = 0x‭6C66‬
+	CyFxSpiPythonWord(200,27609);//0x6AE0);// 0x6AF4);//0x61A8);
+}
+
+void
+CyPythonFrameSet(void )
+{
+// 30 FPS
+	CyFxSpiPythonWord(199, 0x0048); // Mult- Timer
+	CyFxSpiPythonWord(200, 0x7871); // fr lenght
+}
+
+void
+CyPythonROISet ( void )
+{
+
+		CyFxSpiPythonWord(256,  0xC207); 		//roi0_configuration0 - ROI Configuration  (194,07)
+												//[7:0]  x_start 0x00 0 ROI 0 − X Start Configuration (bits 8..1)
+												//[15:8] x_end   0xC9 201 ROI 0 − X End Configuration (bits 8..1)
+		CyFxSpiPythonWord(257,  0x8810); 		//roi0_configuration1 - ROI Configuration  (136,16)
+												//[7:0]  y_start 0x00 0 ROI 0 − Y Start Configuration (bits 9..2)
+												//[15:8] y_end   0x97 151 ROI 0 − Y End Configuration (bits 9..2)
+
+		CyFxSpiPythonWord(258,  0x3B14); 		//
+		CyFxSpiPythonWord(259,  0xBB44); 		//
+
+		CyFxSpiPythonWord(260, 0); //
+		CyFxSpiPythonWord(261, 0); //
+		CyFxSpiPythonWord(262, 0); //
+		CyFxSpiPythonWord(263, 0); //
+
+		CyFxSpiPythonWord(263, 0); //
+		CyFxSpiPythonWord(264, 20);//C4); //
+		CyFxSpiPythonWord(265, 0); //
+}
+
+
+
 
 void
 CyPythonReadID ( void )
@@ -863,10 +1117,13 @@ SensorInit (
 	 CyPythonProgmmUpload(); 	 	 	 	 	//normal mode 130mA 	 83 degrees in house without 60 graden
 	 CyPythonSoftPowerUp();
 	 CyPythonROISet();			//Set frame Sizes to 752x460;
-	 CyPythonFrameSet();		//Set frame rate to 30 FPS
+	 CyPythonFrameSet_PLL_Bypass();		//Set frame rate to 30 FPS
 
-	 CyFxSpiPythonWord( P480_EXPOSURE, 22355);	//EXPOSURE_DEF );
-	 CyFxSpiPythonWord( P480_DIGITAL_GAIN, GAIN_DEF );		//103mA
+	 CyFxSpiPythonWord( 201, 27532);	//EXPOSURE_DEF );
+	 CyFxSpiPythonWord( 205, 384 );		//103mA
+
+
+
 
 }
 
