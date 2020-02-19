@@ -4,3 +4,8 @@ Please go [HERE](https://github.com/ninscope/Firmware/wiki/NINscope-firmware) fo
 
 
 Check releases for [changes and updates](https://github.com/ninscope/Firmware/releases)
+
+<hr>
+
+ [Hardware](https://github.com/ninscope/Hardware/) -
+[Software](https://github.com/ninscope/Software/wiki/NINscope-Software) 
