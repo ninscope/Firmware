@@ -3662,7 +3662,7 @@ void  CyUSBUARThread_Entry(uint32_t input)
 									outBuf_p.buffer[outBuf_p.count++] = 'V';	// Record Stop Package
 									outBuf_p.buffer[outBuf_p.count++] = '1';
 									outBuf_p.buffer[outBuf_p.count++] = '.';
-									outBuf_p.buffer[outBuf_p.count++] = '2';
+									outBuf_p.buffer[outBuf_p.count++] = '3';
 									outBuf_p.buffer[outBuf_p.count++] = 0x0A;
 									outBuf_p.size = 1024;
 
@@ -3798,7 +3798,7 @@ main (
     apiRetStatus = CyU3PDeviceCacheControl (CyTrue, CyFalse, CyFalse);
 
     /* Configure the IO matrix for the device. */
-    io_cfg.isDQ32Bit        = CyTrue;
+    io_cfg.isDQ32Bit        = CyFalse;
     io_cfg.s0Mode       	= CyFalse;
     io_cfg.s1Mode	        = CyFalse;
     io_cfg.lppMode          = CY_U3P_IO_MATRIX_LPP_DEFAULT;
