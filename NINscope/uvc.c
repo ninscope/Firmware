@@ -3663,6 +3663,7 @@ void  CyUSBUARThread_Entry(uint32_t input)
 									outBuf_p.buffer[outBuf_p.count++] = '1';
 									outBuf_p.buffer[outBuf_p.count++] = '.';
 									outBuf_p.buffer[outBuf_p.count++] = '3';
+									outBuf_p.buffer[outBuf_p.count++] = 'a';
 									outBuf_p.buffer[outBuf_p.count++] = 0x0A;
 									outBuf_p.size = 1024;
 
